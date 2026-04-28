@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+title: "restoration-zonal-diff"
+message: "If you use this software, please cite it as below."
+type: software
+authors:
+  - family-names: Tasleem
+    given-names: Daud
+repository-code: "https://github.com/daudee215/restoration-zonal-diff"
+url: "https://daudee215.github.io/restoration-zonal-diff/"
+version: 0.1.0
+date-released: "2026-04-28"
+license: MIT
+keywords:
+  - GIS
+  - remote-sensing
+  - ecosystem-services
+  - nature-restoration
+  - zonal-statistics
+  - monte-carlo

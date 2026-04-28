@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>restoration-zonal-diff — interactive demo</title>
+<meta name="description" content="Streaming Monte Carlo zonal-diff over baseline and scenario rasters. v0.1.0 demo.">
+<style>
+  :root {
+    --bg: #ffffff;
+    --surface: #f6f5f0;
+    --text: #1a1a17;
+    --text-2: #5f5e5a;
+    --border: rgba(0,0,0,0.12);
+    --accent-a: #534AB7;
+    --accent-b: #993556;
+    --info-bg: #E6F1FB;
+    --info-text: #0C447C;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    color-scheme: light dark;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a17;
+      --surface: #25241f;
+      --text: #f1efe8;
+      --text-2: #b4b2a9;
+      --border: rgba(255,255,255,0.14);
+      --accent-a: #AFA9EC;
+      --accent-b: #ED93B1;
+      --info-bg: #0C447C;
+      --info-text: #B5D4F4;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; background: var(--bg); color: var(--text);
+    font-family: -apple-system, "Segoe UI", system-ui, "Inter", Roboto, sans-serif;
+    font-size: 16px; line-height: 1.6; }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 2rem 1.25rem 4rem; }
+  h1 { font-size: 22px; font-weight: 500; margin: 0; }
+  h2 { font-size: 18px; font-weight: 500; margin: 1.5rem 0 0.5rem; }
+  p { margin: 0.5rem 0 1rem; color: var(--text-2); }
+  a { color: var(--info-text); }
+  .header { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+  .pill { font-size: 12px; padding: 2px 10px; background: var(--info-bg); color: var(--info-text); border-radius: 999px; }
+  .grid3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+  .panel { background: var(--surface); border-radius: var(--radius-md); padding: 0.75rem; }
+  .panel .label { font-size: 12px; color: var(--text-2); margin-bottom: 6px; }
+  canvas.raster { width: 100%; max-width: 220px; image-rendering: pixelated;
+    border-radius: 4px; border: 0.5px solid var(--border); display: block; }
+  .legend { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; font-size: 13px; margin: 1rem 0 1.25rem; color: var(--text-2); }
+  .swatch { display: inline-block; width: 14px; height: 14px; border-radius: 3px; margin-right: 6px; vertical-align: middle; }
+  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg);
+    padding: 1rem 1.25rem; margin: 1rem 0; }
+  table.coef { width: 100%; font-size: 14px; border-collapse: collapse; }
+  table.coef th, table.coef td { padding: 6px 8px; }
+  table.coef th { font-weight: 400; color: var(--text-2); text-align: left; }
+  table.coef input { width: 64px; padding: 4px 6px; background: var(--bg); color: var(--text);
+    border: 0.5px solid var(--border); border-radius: 4px; font: inherit; text-align: right; }
+  .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; margin: 1rem 0; }
+  .controls label { font-size: 14px; color: var(--text-2); }
+  .controls input[type=range] { flex: 1; min-width: 160px; accent-color: var(--accent-a); }
+  .controls .out { font-weight: 500; min-width: 56px; text-align: right; font-variant-numeric: tabular-nums; }
+  button { font: inherit; padding: 8px 16px; background: transparent; color: var(--text);
+    border: 0.5px solid var(--border); border-radius: var(--radius-md); cursor: pointer; }
+  button:hover { background: var(--surface); }
+  button:active { transform: scale(0.98); }
+  table.results { width: 100%; font-size: 14px; border-collapse: collapse; }
+  table.results th, table.results td { padding: 8px; }
+  table.results th { font-weight: 400; color: var(--text-2); border-bottom: 0.5px solid var(--border); text-align: left; }
+  table.results td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .bar { position: relative; height: 22px; background: var(--surface); border-radius: 4px; }
+  .bar .zero { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--border); }
+  .bar .ci { position: absolute; top: 6px; bottom: 6px; opacity: 0.55; border-radius: 2px; }
+  .bar .mean { position: absolute; top: 2px; bottom: 2px; width: 2px; }
+  .meta { font-size: 13px; color: var(--text-2); margin-top: 0.75rem; }
+  footer { font-size: 13px; color: var(--text-2); margin-top: 3rem; border-top: 0.5px solid var(--border); padding-top: 1rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <h1>restoration-zonal-diff</h1>
+    <span class="pill">v0.1.0 demo</span>
+  </div>
+  <p>Streaming, Monte Carlo–propagated per-zone zonal-diff over a baseline land-cover raster and one or more restoration-scenario rasters. The full library is on
+    <a href="https://github.com/daudee215/restoration-zonal-diff">GitHub</a>;
+    this page runs a small in-browser port of the algorithm so you can see how Monte Carlo draws translate into per-zone credible intervals.</p>
+
+  <h2>Inputs</h2>
+  <div class="grid3">
+    <div class="panel"><div class="label">Baseline land-cover</div><canvas class="raster" id="rzd-base" width="160" height="160"></canvas></div>
+    <div class="panel"><div class="label">Restoration scenario</div><canvas class="raster" id="rzd-scen" width="160" height="160"></canvas></div>
+    <div class="panel"><div class="label">Zones (NUTS3-style)</div><canvas class="raster" id="rzd-zone" width="160" height="160"></canvas></div>
+  </div>
+  <div class="legend">
+    <span><span class="swatch" style="background:#0F6E56"></span>1 Forest</span>
+    <span><span class="swatch" style="background:#97C459"></span>2 Grassland</span>
+    <span><span class="swatch" style="background:#D85A30"></span>3 Degraded</span>
+    <span style="margin-left:1rem"><span class="swatch" style="background:#AFA9EC"></span>Zone A</span>
+    <span><span class="swatch" style="background:#F4C0D1"></span>Zone B</span>
+  </div>
+
+  <div class="card">
+    <div style="font-weight:500;margin-bottom:6px;">TEEB carbon coefficients per class (low, mode, high)</div>
+    <table class="coef">
+      <thead><tr><th>Class</th><th style="text-align:right;">low</th><th style="text-align:right;">mode</th><th style="text-align:right;">high</th></tr></thead>
+      <tbody>
+        <tr><td>1 Forest</td><td style="text-align:right;"><input type="number" id="lo1" value="10" step="0.5"></td><td style="text-align:right;"><input type="number" id="mo1" value="12" step="0.5"></td><td style="text-align:right;"><input type="number" id="hi1" value="14" step="0.5"></td></tr>
+        <tr><td>2 Grassland</td><td style="text-align:right;"><input type="number" id="lo2" value="5" step="0.5"></td><td style="text-align:right;"><input type="number" id="mo2" value="7" step="0.5"></td><td style="text-align:right;"><input type="number" id="hi2" value="9" step="0.5"></td></tr>
+        <tr><td>3 Degraded</td><td style="text-align:right;"><input type="number" id="lo3" value="1" step="0.5"></td><td style="text-align:right;"><input type="number" id="mo3" value="2" step="0.5"></td><td style="text-align:right;"><input type="number" id="hi3" value="3" step="0.5"></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="controls">
+    <label for="rzd-ndraws">Monte Carlo draws</label>
+    <input id="rzd-ndraws" type="range" min="100" max="5000" step="100" value="2000">
+    <span id="rzd-ndraws-out" class="out">2,000</span>
+    <button id="rzd-run">Run zonal diff</button>
+  </div>
+
+  <h2>Per-zone delta in carbon ESV (scenario − baseline)</h2>
+  <table class="results">
+    <thead><tr><th>Zone</th><th style="text-align:right;">Pixels</th><th style="text-align:right;">Δ mean</th><th style="text-align:right;">95% CI</th><th>Distribution</th></tr></thead>
+    <tbody id="rzd-tbody"></tbody>
+  </table>
+  <div id="rzd-meta" class="meta"></div>
+
+  <footer>
+    Source: <a href="https://github.com/daudee215/restoration-zonal-diff">github.com/daudee215/restoration-zonal-diff</a> · Author: Daud Tasleem · License: MIT · 2026
+  </footer>
+</div>
+
+<script>
+(function(){
+  const baseline = [
+    [3,3,3,2,2,3,3,2,2,3],
+    [3,3,2,2,2,3,3,3,2,3],
+    [3,3,2,2,3,3,3,3,3,3],
+    [3,2,2,3,3,3,3,3,3,3],
+    [2,2,3,3,3,3,3,3,3,3],
+    [3,3,3,3,3,3,2,2,3,3],
+    [3,3,3,3,3,2,2,2,3,3],
+    [3,3,3,3,2,2,2,3,3,3],
+    [3,3,3,2,2,3,3,3,3,3],
+    [3,3,3,3,3,3,3,3,3,3],
+  ];
+  const scenario = [
+    [1,1,2,2,2,1,1,2,2,2],
+    [1,1,2,2,2,1,1,1,2,2],
+    [1,2,2,2,2,1,1,1,1,2],
+    [2,2,2,2,2,1,1,1,1,2],
+    [2,2,2,2,2,1,1,1,2,2],
+    [3,2,2,2,2,2,1,1,2,2],
+    [3,3,2,2,2,1,1,1,2,2],
+    [3,3,3,2,1,1,1,2,2,3],
+    [3,3,2,1,1,2,2,2,3,3],
+    [3,3,2,2,2,2,3,3,3,3],
+  ];
+  const zones = [];
+  for (let r = 0; r < 10; r++) { const row = []; for (let c = 0; c < 10; c++) row.push(c < 5 ? 1 : 2); zones.push(row); }
+  const classColors = {1:'#0F6E56',2:'#97C459',3:'#D85A30'};
+  const zoneColors = {1:'#AFA9EC',2:'#F4C0D1'};
+  const ciColors = {1:'#534AB7',2:'#993556'};
+
+  function paint(id, grid, palette) {
+    const cv = document.getElementById(id), ctx = cv.getContext('2d'), cell = cv.width / grid.length;
+    for (let r = 0; r < grid.length; r++) for (let c = 0; c < grid[0].length; c++) {
+      ctx.fillStyle = palette[grid[r][c]] || '#888';
+      ctx.fillRect(c*cell, r*cell, cell, cell);
+    }
+    ctx.strokeStyle = 'rgba(0,0,0,0.08)'; ctx.lineWidth = 0.5;
+    for (let i = 0; i <= grid.length; i++) {
+      ctx.beginPath(); ctx.moveTo(i*cell, 0); ctx.lineTo(i*cell, cv.height); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(0, i*cell); ctx.lineTo(cv.width, i*cell); ctx.stroke();
+    }
+  }
+
+  function triDraws(low, mode, high, n) {
+    const out = new Float64Array(n);
+    if (low === high) { out.fill(mode); return out; }
+    const span = high - low, cut = (mode - low) / span;
+    for (let i = 0; i < n; i++) {
+      const u = Math.random();
+      out[i] = u < cut ? low + Math.sqrt(u * span * (mode - low)) : high - Math.sqrt((1 - u) * span * (high - mode));
+    }
+    return out;
+  }
+
+  function accumulate(grid, draws) {
+    const sums = {}, counts = {};
+    for (let r = 0; r < grid.length; r++) for (let c = 0; c < grid[0].length; c++) {
+      const z = zones[r][c], cls = grid[r][c];
+      counts[z] = (counts[z] || 0) + 1;
+      if (!sums[z]) sums[z] = new Float64Array(draws[cls].length);
+      const v = draws[cls], sv = sums[z];
+      for (let k = 0; k < v.length; k++) sv[k] += v[k];
+    }
+    return { sums, counts };
+  }
+
+  function pct(arr, p) {
+    const sorted = Array.from(arr).sort((a,b)=>a-b);
+    return sorted[Math.min(sorted.length-1, Math.max(0, Math.floor((p/100)*sorted.length)))];
+  }
+  function fmt(x){ return x.toFixed(1); }
+
+  function bar(d, gMin, gMax, color) {
+    const lo = pct(d, 2.5), hi = pct(d, 97.5);
+    let mean = 0; for (let i = 0; i < d.length; i++) mean += d[i]; mean /= d.length;
+    const span = gMax - gMin || 1;
+    const zeroPct = ((0 - gMin)/span) * 100;
+    const loPct = ((lo - gMin)/span) * 100;
+    const hiPct = ((hi - gMin)/span) * 100;
+    const meanPct = ((mean - gMin)/span) * 100;
+    return `<div class="bar"><div class="zero" style="left:${zeroPct}%"></div>`
+      + `<div class="ci" style="left:${loPct}%; width:${hiPct-loPct}%; background:${color}"></div>`
+      + `<div class="mean" style="left:calc(${meanPct}% - 1px); background:${color}"></div></div>`;
+  }
+
+  function run() {
+    const N = parseInt(document.getElementById('rzd-ndraws').value, 10);
+    const params = {};
+    for (const c of [1,2,3]) {
+      params[c] = [
+        parseFloat(document.getElementById('lo'+c).value),
+        parseFloat(document.getElementById('mo'+c).value),
+        parseFloat(document.getElementById('hi'+c).value),
+      ];
+      const [l,m,h] = params[c];
+      if (!(l <= m && m <= h)) {
+        document.getElementById('rzd-meta').textContent = 'invalid coefficients for class '+c+': require low ≤ mode ≤ high';
+        document.getElementById('rzd-tbody').innerHTML = '';
+        return;
+      }
+    }
+    const draws = {};
+    for (const c of [1,2,3]) draws[c] = triDraws(params[c][0], params[c][1], params[c][2], N);
+
+    const t0 = performance.now();
+    const baseAcc = accumulate(baseline, draws);
+    const scenAcc = accumulate(scenario, draws);
+    const zoneIds = [1,2];
+    const perZone = {};
+    for (const z of zoneIds) {
+      const b = baseAcc.sums[z], s = scenAcc.sums[z];
+      const d = new Float64Array(N);
+      for (let k = 0; k < N; k++) d[k] = s[k] - b[k];
+      perZone[z] = { d, pixels: scenAcc.counts[z] };
+    }
+    const elapsed = performance.now() - t0;
+
+    let gMin = Infinity, gMax = -Infinity;
+    for (const z of zoneIds) {
+      const lo = pct(perZone[z].d, 2.5), hi = pct(perZone[z].d, 97.5);
+      if (lo < gMin) gMin = lo; if (hi > gMax) gMax = hi;
+    }
+
+    const tbody = document.getElementById('rzd-tbody');
+    tbody.innerHTML = '';
+    for (const z of zoneIds) {
+      const { d, pixels } = perZone[z];
+      const lo = pct(d, 2.5), hi = pct(d, 97.5);
+      let mean = 0; for (let i = 0; i < d.length; i++) mean += d[i]; mean /= d.length;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `<td>Zone ${z===1?'A':'B'}</td>`
+        + `<td class="num">${pixels}</td>`
+        + `<td class="num">${fmt(mean)}</td>`
+        + `<td class="num" style="color:var(--text-2)">[${fmt(lo)}, ${fmt(hi)}]</td>`
+        + `<td>${bar(d, gMin, gMax, ciColors[z])}</td>`;
+      tbody.appendChild(tr);
+    }
+    document.getElementById('rzd-meta').textContent = `${N.toLocaleString()} Monte Carlo draws · single-sweep accumulator · ${Math.round(elapsed)} ms in browser`;
+  }
+
+  paint('rzd-base', baseline, classColors);
+  paint('rzd-scen', scenario, classColors);
+  paint('rzd-zone', zones, zoneColors);
+
+  const slider = document.getElementById('rzd-ndraws');
+  slider.addEventListener('input', () => {
+    document.getElementById('rzd-ndraws-out').textContent = parseInt(slider.value,10).toLocaleString();
+  });
+  document.getElementById('rzd-run').addEventListener('click', run);
+  run();
+})();
+</script>
+</body>
+</html>

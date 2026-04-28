@@ -1,0 +1,15 @@
+site_name: restoration-zonal-diff
+site_description: Streaming Monte Carlo zonal-diff for restoration scenario assessment
+repo_url: https://github.com/daudee215/restoration-zonal-diff
+theme:
+  name: material
+  features:
+    - navigation.instant
+    - navigation.sections
+    - content.code.copy
+
+nav:
+  - Home: index.md
+  - ADR-0001 architecture: adr/0001-architecture.md
+
+strict: true
