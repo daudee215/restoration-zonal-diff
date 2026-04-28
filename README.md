@@ -118,7 +118,7 @@ restoration-zonal-diff run \
 
 ## API reference
 
-See [docs/index.md](docs/index.md) and the rendered docs at <https://daudee215.github.io/restoration-zonal-diff/>.
+See [docs/index.md](docs/index.md) and the rendered docs at <https://daudee215.github.io/restoration-zonal-diff/  (hosted from the central showcase repo at daudee215/daudee215.github.io)>.
 
 ## Benchmark
 
