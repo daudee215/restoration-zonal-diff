@@ -1,6 +1,6 @@
 # restoration-zonal-diff
 
-Streaming, Monte Carlo–propagated per-zone zonal-diff over a baseline raster and one or more scenario rasters, for nature restoration assessment under coefficient uncertainty.
+Streaming, Monte Carlo-propagated per-zone zonal-diff over a baseline raster and one or more scenario rasters, for nature restoration assessment under coefficient uncertainty.
 
 [![CI](https://github.com/daudee215/restoration-zonal-diff/actions/workflows/ci.yml/badge.svg)](https://github.com/daudee215/restoration-zonal-diff/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -17,9 +17,9 @@ Given:
 
 the library streams the rasters in raster-native windows, draws `N` Monte Carlo samples per coefficient triangular distribution, and emits a long-format Pandas DataFrame keyed by `(zone_id, scenario_id, service)` with columns:
 
-- `delta_mean` — mean of (`scenario - baseline`) ESV across draws,
-- `delta_p2_5`, `delta_p97_5` — 95 % credible interval bounds,
-- `pixels` — number of valid pixels in the zone.
+- `delta_mean` - mean of (`scenario - baseline`) ESV across draws,
+- `delta_p2_5`, `delta_p97_5` - 95 % credible interval bounds,
+- `pixels` - number of valid pixels in the zone.
 
 A single sweep of the rasters is performed per call. Memory is `O(zones × draws × services)`; raster size is unbounded by working memory.
 
@@ -27,14 +27,14 @@ A single sweep of the rasters is performed per call. Memory is `O(zones × draws
 
 Source signals collected on 2026-04-28 ([gap-research](../../gap-research_arxiv.json)):
 
-- **arXiv 2604.11842** — Kovalenko et al., "Propagating coefficient uncertainty through benefit-transfer ecosystem-service maps". Framework only, no code.
-- **arXiv 2604.09377** — Petrov & Liedtke, "Streaming windowed zonal statistics for large-extent restoration scenario assessment". No code release planned.
-- **rasterstats #348** — feature request for zonal stats over a baseline + scenario raster pair (per-zone delta).
-- **exactextract #211** — Monte Carlo uncertainty propagation across zonal stats; out of scope for v0.10.
-- **InVEST #1418** — workflow request for scenario differencing with explicit MC uncertainty bands; "good fit for a downstream tool, not InVEST core".
-- **gis.SE #487120**, **#491844**, **#502033** — three open questions on streaming MC zonal stats and EU Nature Restoration Regulation Article 4 indicator tooling.
+- **arXiv 2604.11842** - Kovalenko et al., "Propagating coefficient uncertainty through benefit-transfer ecosystem-service maps". Framework only, no code.
+- **arXiv 2604.09377** - Petrov & Liedtke, "Streaming windowed zonal statistics for large-extent restoration scenario assessment". No code release planned.
+- **rasterstats #348** - feature request for zonal stats over a baseline + scenario raster pair (per-zone delta).
+- **exactextract #211** - Monte Carlo uncertainty propagation across zonal stats; out of scope for v0.10.
+- **InVEST #1418** - workflow request for scenario differencing with explicit MC uncertainty bands; "good fit for a downstream tool, not InVEST core".
+- **gis.SE #487120**, **#491844**, **#502033** - three open questions on streaming MC zonal stats and EU Nature Restoration Regulation Article 4 indicator tooling.
 
-The closest libraries — `rasterstats`, `exactextract`, `pylandstats`, `rioxarray`, `InVEST` — solve neighbouring problems but none does single-sweep streaming MC zonal-diff. `restoration-zonal-diff` does.
+The closest libraries - `rasterstats`, `exactextract`, `pylandstats`, `rioxarray`, `InVEST` - solve neighbouring problems but none does single-sweep streaming MC zonal-diff. `restoration-zonal-diff` does.
 
 ## Install
 
@@ -154,4 +154,4 @@ ESA WorldCover 10 m, single tile (~120 MB raw), NUTS3 zones (1,500 polygons), 6 
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT - see [LICENSE](LICENSE).
