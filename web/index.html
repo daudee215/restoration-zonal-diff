@@ -54,6 +54,21 @@
   .container { max-width: 1100px; margin: 0 auto; padding: 32px 16px 64px; }
   .grid-2 { display: grid; grid-template-columns: 300px 1fr; gap: 24px; align-items: start; }
   @media(max-width: 720px) { .grid-2 { grid-template-columns: 1fr; } }
+  /* Allow grid items to shrink below min-content so the page does
+     not overflow on narrow viewports. Without this, the aside's
+     intrinsic min-content (numeric inputs in the TEEB table) forces
+     the grid track wider than the viewport. */
+  .grid-2 > * { min-width: 0; }
+
+  @media (max-width: 480px) {
+    /* Wide tables scroll horizontally inside their panel rather than
+       blowing out the page width. */
+    .panel-body { overflow-x: auto; }
+    .coef-table { min-width: 280px; }
+    table.results { min-width: 320px; }
+    .coef-table input { width: 48px; }
+  }
+
 
   .panel {
     background: var(--card); border: 1px solid var(--border);
