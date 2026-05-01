@@ -1,0 +1,24 @@
+/* Restore a visible focus indicator across all focusable elements.
+   mkdocs-material aggressively strips outlines (e.g. on the search input
+   via `outline: 0 transparent !important`), which the gisgap layout-
+   audit gate flags. We use `!important` to beat the theme's overrides
+   rather than chase specificity. */
+input:focus,
+button:focus,
+a:focus,
+select:focus,
+textarea:focus,
+[tabindex]:focus {
+  outline: 2px solid var(--md-accent-fg-color, #2b6cb0) !important;
+  outline-offset: 2px !important;
+}
+.md-search__input:focus {
+  box-shadow: 0 0 0 2px var(--md-accent-fg-color, #2b6cb0) !important;
+}
+/* Keep the keyboard-only ring rule too, so non-input focusables get a
+   ring only on keyboard navigation (more typical UX). */
+:focus-visible {
+  outline: 2px solid var(--md-accent-fg-color, #2b6cb0);
+  outline-offset: 2px;
+  border-radius: 3px;
+}
