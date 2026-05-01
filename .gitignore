@@ -14,3 +14,10 @@ site/
 htmlcov/
 .benchmarks/
 .DS_Store
+
+# Layout-audit outputs
+node_modules/
+audit-report.json
+screenshots/
+playwright-report/
+test-results/

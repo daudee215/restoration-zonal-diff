@@ -1,0 +1,65 @@
+# audit-layout.yml — Pre-merge layout / UI-UX gate.
+#
+# Runs the eight-rule layout audit against the static demo at four
+# breakpoints (360, 920, 1180, 1440 px) and fails the check if any
+# rule is violated.
+#
+# Source of rules: tools/audit-layout.mjs
+
+name: audit-layout
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: audit-layout-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Install Python + mkdocs-material
+        run: |
+          python3 -m pip install --upgrade pip
+          pip install mkdocs mkdocs-material
+
+      - name: Build mkdocs site
+        run: mkdocs build --site-dir _site
+
+      - name: Serve and audit
+        run: |
+          (cd _site && python3 -m http.server 4173 &) && sleep 2
+          AUDIT_URL=http://localhost:4173/ npm run audit:layout:ci
+
+      - name: Upload audit report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-report
+          path: |
+            audit-report.json
+            screenshots/
+          if-no-files-found: ignore
+          retention-days: 14
