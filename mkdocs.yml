@@ -13,3 +13,6 @@ nav:
   - ADR-0001 architecture: adr/0001-architecture.md
 
 strict: true
+
+extra_css:
+  - stylesheets/extra.css
